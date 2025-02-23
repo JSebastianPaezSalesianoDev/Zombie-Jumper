@@ -4,42 +4,61 @@ using UnityEngine;
 
 public class ZombieMovement : MonoBehaviour
 {
-    public float moveSpeed = 5f;      // Velocidad de movimiento horizontal (ajustable en el Inspector)
-    public float jumpForce = 10f;     // Fuerza del salto (ajustable en el Inspector)
-    private Rigidbody2D rb;           // Referencia al componente Rigidbody2D del personaje
-    // Start is called before the first frame update
+    public float moveSpeed = 5f;      // Velocidad de movimiento horizontal
+    public float jumpForce = 10f;     // Fuerza del salto
+
+    public Transform groundCheckPoint;      // Punto para verificar si está en el suelo
+    public float groundCheckRadius = 0.2f;  // Radio de detección del suelo
+    public LayerMask groundLayer;           // Capa que representa el suelo
+
+    private Rigidbody2D rb;          // Referencia al Rigidbody2D del personaje
+    private bool isGrounded;         // Indica si está en el suelo
+    private bool wasJumping = false; // Evita saltos múltiples
+
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
 
         if (rb == null)
         {
-            Debug.LogError("ZombieMovement: No se encontró un Rigidbody2D en el personaje.(Null)");
-            // hay que tenerlo para que el script funcione
+            Debug.LogError("ZombieMovement: No se encontró un Rigidbody2D en el personaje.");
         }
     }
 
-    // Update is called once per frame
     void Update()
     {
-        if (rb == null) return;// para que se salga si no hay
+        isGrounded = CheckGround();
 
-         // Movimiento Horizontal
-        float horizontalInput = Input.GetAxisRaw("Horizontal"); // Obtiene -1 (izquierda), 0 (ninguno), 1 (derecha)
-        Vector2 movement = new Vector2(horizontalInput * moveSpeed, rb.velocity.y); // Mantiene la velocidad vertical actual
-        rb.velocity = movement; // Aplica la velocidad horizontal al Rigidbody2D
+        if (isGrounded)
+        {
+            wasJumping = false; // Se puede volver a saltar cuando toca el suelo
+        }
 
-        // Salto (al presionar la barra espaciadora)
-        if (Input.GetButtonDown("Jump")) // "Jump" por defecto es la barra espaciadora
+        // Movimiento Horizontal
+        float horizontalInput = Input.GetAxisRaw("Horizontal");
+        rb.velocity = new Vector2(horizontalInput * moveSpeed, rb.velocity.y);
+
+        // Salto
+        if (Input.GetButtonDown("Jump"))
         {
             Jump();
         }
-
-            void Jump()
-    {
-        // Aplicar una fuerza vertical para el salto
-        rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse); // ForceMode2D.Impulse es para un salto instantáneo
     }
-        
+
+    void Jump()
+    {
+        if (isGrounded && !wasJumping) // Solo salta si está en el suelo y no ha saltado antes
+        {
+            rb.velocity = new Vector2(rb.velocity.x, 0); // Resetea la velocidad en Y antes de saltar
+            rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
+            wasJumping = true; // Se activa para evitar otro salto inmediato
+        }
+    }
+
+    bool CheckGround()
+    {
+        // Usa OverlapCircle para revisar si hay colisión con el suelo
+        Collider2D[] colliders = Physics2D.OverlapCircleAll(groundCheckPoint.position, groundCheckRadius, groundLayer);
+        return colliders.Length > 0;
     }
 }
