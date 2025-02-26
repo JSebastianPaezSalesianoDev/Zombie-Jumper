@@ -2,8 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ZombieMovement : MonoBehaviour
+public class ScriptMovement : MonoBehaviour
 {
+    // Start is called before the first frame update
     public float moveSpeed = 5f;      // Velocidad de movimiento horizontal
     [SerializeField] float jumpForce = 7.5f;     // Fuerza del salto
 
@@ -17,11 +18,13 @@ public class ZombieMovement : MonoBehaviour
 
     private Rigidbody2D rb;          // Referencia al Rigidbody2D del personaje
     private bool firstJump = true;  // Permite un primer salto extra
+    private AudioSource jumpSoundEffect; // Variable para el Audio Source del sonido de salto
 
     void Start()
     {
         vecGravity = new Vector2(0, -Physics2D.gravity.y);
         rb = GetComponent<Rigidbody2D>();   
+         jumpSoundEffect = GetComponent<AudioSource>();
     }
 
     void Update()
@@ -57,12 +60,13 @@ public class ZombieMovement : MonoBehaviour
     {
         if (isGrounded || firstJump) // Permite un salto extra si no está en el suelo
         {
-            rb.velocity = new Vector2(rb.velocity.x, 0); // Resetea la velocidad en Y antes de saltar
+            rb.velocity = new Vector2(rb.velocity.x, 0);
             rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
+            jumpSoundEffect.Play();
             
             if (isGrounded)
             {
-                firstJump = false; // Solo consume el primer salto extra cuando ya no está en el suelo
+                firstJump = false;
             }
         }
     }
